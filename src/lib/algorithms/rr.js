@@ -1,36 +1,36 @@
 //doesn't care about any times, if process takes longer than time quantum, it goes to the end of the line (what an impatient algorithm!)
 const rr = (processes, timeQuantum) => {
+    let time = 0;
+    let queue = [...processes];
+    let completionTimes = [];
+    let waitTimes = [];
+    let turnaroundTimes = [];
     let totalWait = 0;
     let totalTurnaround = 0;
-    let currTime = 0;
-    let queue = [...processes];
-    let completedProcesses = [];
-
+    
+    processes.sort((a, b) => a.arrival - b.arrival);
+    
     while (queue.length > 0) {
-        const process = queue.shift();
-        let execTime = Math.min(process.burstTime, timeQuantum);
-
-        process.burstTime -= execTime;
-        currTime += execTime;
-
-        if (process.burstTime > 0) {
-            queue.push(process);
-        }
-        else {
-            process.endTime = currTime;
-            process.turnaroundTime = process.endTime - process.arrivalTime;
-            process.waitTime = process.turnaroundTime - execTime;
-
-            totalWait += process.waitTime;
-            totalTurnaround += process.turnaroundTime;
-            completedProcesses.push(process);
+        let process = queue.shift();
+        let execTime = Math.min(process.burst, timeQuantum);
+        
+        time += execTime;
+        process.burst -= execTime;
+        
+        if (process.burst > 0) {
+            queue.push(process); //if not done, push to end of queue
+        } else {
+            completionTimes.push(time);
+            let turnaround = time - process.arrival;
+            let wait = turnaround - process.burst;
+            turnaroundTimes.push(turnaround);
+            waitTimes.push(wait);
+            totalTurnaround += turnaround;
+            totalWait += wait;
         }
     }
     
-    const avgWait = totalWait / processes.length;
-    const avgTurnaround = totalTurnaround / processes.length;
-
-    return [{processes, avgWait, avgTurnaround}];
+    return { completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround };
 };
 
 export default rr;

@@ -1,45 +1,36 @@
 //This is just SJF but new processes with shorter burst times get to go first
 const stcf = (processes) => {
+    let time = 0;
+    let completionTimes = [];
+    let waitTimes = [];
+    let turnaroundTimes = [];
     let totalWait = 0;
     let totalTurnaround = 0;
-    let currTime = 0;
-    let completedProcesses = [];
-    let remainingProcesses = [];
-    let ready = [];
-
-    remainingProcesses.sort((a,b) => a.arrivalTime - b.arrivalTime);
-
-    while (remainingProcesses.length > 0 || ready.length > 0) {
-        while (remainingProcesses.length > 0 && remainingProcesses[0].arrivalTime <= currTime) {
-            ready.push(remainingProcesses.shift());
-    }
-
-    if (ready.length == 0) {
-        if (remainingProcesses.length > 0) {
-            currTime = remainingProcesses[0].arrivalTime;
+    
+    processes.sort((a, b) => a.arrival - b.arrival);
+    
+    while (processes.length > 0) {
+        processes = processes.filter(p => p.arrival <= time); //gets all available processes, allows for preempting
+        
+        if (processes.length === 0) {
+            time++;
+            continue;
         }
-        continue;
+        
+        processes.sort((a, b) => a.burst - b.burst); //this is the SJF part, find shortest burst and go
+        let process = processes.shift();
+        
+        time += process.burst;
+        completionTimes.push(time);
+        let turnaround = time - process.arrival;
+        let wait = turnaround - process.burst;
+        turnaroundTimes.push(turnaround);
+        waitTimes.push(wait);
+        totalTurnaround += turnaround;
+        totalWait += wait;
     }
-
-    ready.sort((a,b) => a.burstTime - b.burstTime);
-
-    const next = ready.shift();
-
-    next.startTime = currTime;
-    currTime += next.burstTime;
-    next.endTime = currTime;
-    next.turnaroundTime = next.endTime - next.arrivalTime;
-    next.waitTime = next.turnaroundTime - next.burstTime;
-
-    totalWait += next.waitTime;
-    totalTurnaround += next.turnaroundTime;
-    completedProcesses.push(next);
-}
-
-const avgWait = totalWait / processes.length;
-const avgTurnaround = totalTurnaround / processes.length;
-
-return [{processes: completedProcesses, avgWait, avgTurnaround}];
+    
+    return { completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround };
 };
 
 export default stcf;
