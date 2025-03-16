@@ -1,5 +1,5 @@
 //This is just SJF but new processes with shorter burst times get to go first
-export const stcf = (processes) => {
+const stcf = (processes) => {
     let totalWait = 0;
     let totalTurnaround = 0;
     let currTime = 0;
@@ -33,11 +33,13 @@ export const stcf = (processes) => {
 
     totalWait += next.waitTime;
     totalTurnaround += next.turnaroundTime;
-    completedProcesses.push(process);
+    completedProcesses.push(next);
 }
 
 const avgWait = totalWait / processes.length;
-const avgTurnaround = totalTurnaround / processes/length;
+const avgTurnaround = totalTurnaround / processes.length;
 
 return [{processes: completedProcesses, avgWait, avgTurnaround}];
 };
+
+export default stcf;

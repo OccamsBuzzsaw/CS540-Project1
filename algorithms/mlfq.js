@@ -1,4 +1,4 @@
-export const mlfq = (processes, timeQuantum1 = 4, timeQuantum2 = 6) => {
+const mlfq = (processes, timeQuantum1 = 4, timeQuantum2 = 6) => {
     let results = [];
     let totalWait = 0;
     let totalTurnaround = 0;
@@ -34,3 +34,5 @@ export const mlfq = (processes, timeQuantum1 = 4, timeQuantum2 = 6) => {
 
     return [{processes, avgWait, avgTurnaround}];
 };
+
+export default mlfq;

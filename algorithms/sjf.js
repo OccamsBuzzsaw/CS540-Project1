@@ -1,24 +1,30 @@
 //Like FIFO, but processes go by shortest to longest burst time
-export const sjf = (processes) => {
-    let totalWait = 0;
-    let totalTurnaround = 0;
-    let currTime = 0;
+const sjf = (processes) => {
+    let time = 0;
+  let completionTimes = [];
+  let waitTimes = [];
+  let turnaroundTimes = [];
 
-    processes.sort((a,b) => a.burstTime - b.burstTime);
+  // Sort processes by arrival time, then by burst time
+  processes.sort((a, b) => a.arrival - b.arrival || a.burst - b.burst);
 
-    processes.forEach((process) => {
-        process.startTime = currTime;
-        process.endTime = currTime + process.burstTime;
-        process.turnaroundTime = process.endTime - process.arrivalTime;
-        process.waitTime = process.turnaroundTime - process.burstTime;
+  processes.forEach((process) => {
+    time += process.burst;
+    completionTimes.push(time);
+    turnaroundTimes.push(time - process.arrival);
+    waitTimes.push(turnaroundTimes[turnaroundTimes.length - 1] - process.burst);
+  });
 
-        totalWait += process.waitTime;
-        totalTurnaround += process.turnaroundTime;
-        currTime += process.burstTime;
-    });
+  const totalWaitTime = waitTimes.reduce((acc, curr) => acc + curr, 0);
+  const totalTurnaroundTime = turnaroundTimes.reduce((acc, curr) => acc + curr, 0);
 
-    const avgWait = totalWait / processes.length;
-    const avgTurnaround = totalTurnaround / processes.length;
+  return {
+    completionTimes,
+    waitTimes,
+    turnaroundTimes,
+    totalWaitTime,
+    totalTurnaroundTime
+  };
+}
 
-    return [{processes, avgWait, avgTurnaround}];
-};
+export default sjf;

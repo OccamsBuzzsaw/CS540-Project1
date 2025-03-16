@@ -1,5 +1,5 @@
 //doesn't care about any times, if process takes longer than time quantum, it goes to the end of the line (what an impatient algorithm!)
-export const rr = (processes, timeQuantum) => {
+const rr = (processes, timeQuantum) => {
     let totalWait = 0;
     let totalTurnaround = 0;
     let currTime = 0;
@@ -19,7 +19,7 @@ export const rr = (processes, timeQuantum) => {
         else {
             process.endTime = currTime;
             process.turnaroundTime = process.endTime - process.arrivalTime;
-            process.waitTime = process.turnaroundTime = (process.burstTime + execTime);
+            process.waitTime = process.turnaroundTime - execTime;
 
             totalWait += process.waitTime;
             totalTurnaround += process.turnaroundTime;
@@ -32,3 +32,5 @@ export const rr = (processes, timeQuantum) => {
 
     return [{processes, avgWait, avgTurnaround}];
 };
+
+export default rr;
