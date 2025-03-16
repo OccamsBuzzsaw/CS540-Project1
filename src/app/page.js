@@ -1,9 +1,9 @@
-import Index from '../lib/index'
+import SchedulingSimulator from '../lib/scheduler'
 
 export default function Home() {
     return (
         <div>
-            <Index />
+            <SchedulingSimulator />
         </div>
     );
 }
