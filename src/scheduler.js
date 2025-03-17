@@ -9,6 +9,7 @@ import sjf from "./algorithms/sjf";
 import stcf from "./algorithms/stcf";
 import {
   Chart as ChartJS,
+  BarController,
   BarElement,
   CategoryScale,
   LinearScale,
@@ -19,7 +20,7 @@ import {
 import jsPDF from "jspdf"
 import html2canvas from "html2canvas";
 
-ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
+ChartJS.register(BarController, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
 const SimulationScheduler = () => {
   const [numProcesses, setNumProcesses] = useState(5);
