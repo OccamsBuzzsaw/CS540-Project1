@@ -1,59 +1,65 @@
-//Much more complicated, splits processes into 2 queues based on burst time
-const mlfq = (processes, tqHigh, tqLow) => {
-    let time = 0;
-    let queueHigh = [];
-    let queueLow = [];
-    let completionTimes = [];
-    let waitTimes = [];
-    let turnaroundTimes = [];
-    let totalWait = 0;
-    let totalTurnaround = 0;
-    
-    processes.sort((a, b) => a.arrival - b.arrival);
-    
-    queueHigh = [...processes];
-    
-    while (queueHigh.length > 0 || queueLow.length > 0) {
-        if (queueHigh.length > 0) {
-            let process = queueHigh.shift();
-            let execTime = Math.min(process.burst, tqHigh);
-            
-            time += execTime;
-            process.burst -= execTime;
-            
-            if (process.burst > 0) {
-                queueLow.push(process); // if not done, push to low priority
-            } else {
-                completionTimes.push(time);
-                let turnaround = time - process.arrival;
-                let wait = turnaround - process.burst;
-                turnaroundTimes.push(turnaround);
-                waitTimes.push(wait);
-                totalTurnaround += turnaround;
-                totalWait += wait;
-            }
-        } else if (queueLow.length > 0) {
-            let process = queueLow.shift();
-            let execTime = Math.min(process.burst, tqLow);
-            
-            time += execTime;
-            process.burst -= execTime;
-            
-            if (process.burst > 0) {
-                queueLow.push(process);
-            } else {
-                completionTimes.push(time);
-                let turnaround = time - process.arrival;
-                let wait = turnaround - process.burst;
-                turnaroundTimes.push(turnaround);
-                waitTimes.push(wait);
-                totalTurnaround += turnaround;
-                totalWait += wait;
-            }
-        }
+//very complicated, run processes based on burst time, but push to low priority queue if it takes too long
+const mlfq = (processes, highQuantum, lowQuantum) => {
+  let completionTimes = Array(processes.length).fill(0);
+  let waitTimes = Array(processes.length).fill(0);
+  let turnaroundTimes = Array(processes.length).fill(0);
+  let totalWait = 0, totalTurnaround = 0;
+  let queues = [[], []];
+  let currentTime = 0;
+  let processMap = new Map();
+  
+  processes.sort((a, b) => a.arrivalTime - b.arrivalTime); // Sort by arrival time
+  let index = 0;
+  
+  while (index < processes.length || queues[0].length > 0 || queues[1].length > 0) {
+    while (index < processes.length && processes[index].arrivalTime <= currentTime) {
+      let processCopy = { ...processes[index], remainingTime: processes[index].burstTime };
+      queues[0].push(processCopy);
+      processMap.set(processCopy.id, processCopy);
+      index++;
     }
     
-    return { completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround };
+    let queueIndex = queues[0].length > 0 ? 0 : 1;
+    if (queues[queueIndex].length === 0) {
+      currentTime = processes[index].arrivalTime; // Jump to next arrival
+      continue;
+    }
+    
+    let process = queues[queueIndex].shift();
+    let quantum = queueIndex === 0 ? highQuantum : lowQuantum;
+    
+    while (process.remainingTime > 0) {
+      let executionTime = Math.min(quantum, process.remainingTime);
+      process.remainingTime -= executionTime;
+      currentTime += executionTime;
+      
+      // Check for new arrivals and preempt if necessary
+      while (index < processes.length && processes[index].arrivalTime <= currentTime) {
+        let newProcess = { ...processes[index], remainingTime: processes[index].burstTime };
+        queues[0].push(newProcess);
+        processMap.set(newProcess.id, newProcess);
+        index++;
+      }
+      
+      if (queues[0].length > 0) {
+        queues[queueIndex].unshift(process);
+        break;
+      }
+    }
+    
+    if (process.remainingTime === 0) {
+      let turnaroundTime = currentTime - process.arrivalTime;
+      let waitTime = turnaroundTime - process.burstTime;
+      completionTimes[process.id] = currentTime;
+      turnaroundTimes[process.id] = turnaroundTime;
+      waitTimes[process.id] = waitTime;
+      totalWait += waitTime;
+      totalTurnaround += turnaroundTime;
+    } else {
+      queues[1].push(process);
+    }
+  }
+  return [completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround];
 };
 
 export default mlfq;

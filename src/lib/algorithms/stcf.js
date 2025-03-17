@@ -1,36 +1,42 @@
-//This is just SJF but new processes with shorter burst times get to go first
+//preemptive SJF, if a new process with shorter burst shows up, it gets to go now
 const stcf = (processes) => {
-    let time = 0;
-    let completionTimes = [];
-    let waitTimes = [];
-    let turnaroundTimes = [];
-    let totalWait = 0;
-    let totalTurnaround = 0;
+  let completionTimes = Array(processes.length).fill(0);
+  let waitTimes = Array(processes.length).fill(0);
+  let turnaroundTimes = Array(processes.length).fill(0);
+  let totalWait = 0, totalTurnaround = 0;
+  let remainingProcesses = processes.map(p => ({ ...p, remainingTime: p.burstTime }));
+  let currentTime = 0, completed = 0;
+  let lastProcess = null;
+  
+  while (completed < processes.length) {
+    let availableProcesses = remainingProcesses.filter(p => p.arrivalTime <= currentTime && p.remainingTime > 0);
     
-    processes.sort((a, b) => a.arrival - b.arrival);
-    
-    while (processes.length > 0) {
-        processes = processes.filter(p => p.arrival <= time); //gets all available processes, allows for preempting
-        
-        if (processes.length === 0) {
-            time++;
-            continue;
-        }
-        
-        processes.sort((a, b) => a.burst - b.burst); //this is the SJF part, find shortest burst and go
-        let process = processes.shift();
-        
-        time += process.burst;
-        completionTimes.push(time);
-        let turnaround = time - process.arrival;
-        let wait = turnaround - process.burst;
-        turnaroundTimes.push(turnaround);
-        waitTimes.push(wait);
-        totalTurnaround += turnaround;
-        totalWait += wait;
+    if (availableProcesses.length === 0) {
+      currentTime++;
+      continue;
     }
     
-    return { completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround };
+    availableProcesses.sort((a, b) => a.remainingTime - b.remainingTime || a.arrivalTime - b.arrivalTime);
+    let process = availableProcesses[0];
+    
+    if (lastProcess !== process.id) {
+      lastProcess = process.id;
+    }
+    
+    process.remainingTime--;
+    currentTime++;
+    
+    if (process.remainingTime === 0) {
+      completed++;
+      let turnaroundTime = currentTime - process.arrivalTime;
+      let waitTime = turnaroundTime - process.burstTime;
+      completionTimes[process.id] = currentTime;
+      turnaroundTimes[process.id] = turnaroundTime;
+      waitTimes[process.id] = waitTime;
+      totalWait += waitTime;
+      totalTurnaround += turnaroundTime;
+    }
+  }
+  return [completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround];
 };
-
 export default stcf;

@@ -1,3 +1,4 @@
+//shortest burst time first
 const sjf = (processes) => {
     if (!Array.isArray(processes) || processes.length === 0) return [[], [], [], 0, 0];
     

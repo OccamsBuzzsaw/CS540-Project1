@@ -1,36 +1,34 @@
-//doesn't care about any times, if process takes longer than time quantum, it goes to the end of the line (what an impatient algorithm!)
-const rr = (processes, timeQuantum) => {
-    let time = 0;
-    let queue = [...processes];
-    let completionTimes = [];
-    let waitTimes = [];
-    let turnaroundTimes = [];
-    let totalWait = 0;
-    let totalTurnaround = 0;
-    
-    processes.sort((a, b) => a.arrival - b.arrival);
-    
-    while (queue.length > 0) {
-        let process = queue.shift();
-        let execTime = Math.min(process.burst, timeQuantum);
-        
-        time += execTime;
-        process.burst -= execTime;
-        
-        if (process.burst > 0) {
-            queue.push(process); //if not done, push to end of queue
-        } else {
-            completionTimes.push(time);
-            let turnaround = time - process.arrival;
-            let wait = turnaround - process.burst;
-            turnaroundTimes.push(turnaround);
-            waitTimes.push(wait);
-            totalTurnaround += turnaround;
-            totalWait += wait;
-        }
+//every process gets a time slot to run, it has to wait for it's next turn if it goes over
+const rr = (processes, quantum) => {
+  let completionTimes = Array(processes.length).fill(0);
+  let waitTimes = Array(processes.length).fill(0);
+  let turnaroundTimes = Array(processes.length).fill(0);
+  let totalWait = 0, totalTurnaround = 0;
+  let queue = processes.map(p => ({ ...p, remainingTime: p.burstTime, startTime: -1 }));
+  let currentTime = 0;
+  
+  while (queue.length > 0) {
+    let process = queue.shift();
+    if (process.startTime === -1) {
+      process.startTime = Math.max(currentTime, process.arrivalTime);
     }
+    let executionTime = Math.min(quantum, process.remainingTime);
     
-    return { completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround };
+    currentTime += executionTime;
+    process.remainingTime -= executionTime;
+    
+    if (process.remainingTime > 0) {
+      queue.push(process);
+    } else {
+      let turnaroundTime = currentTime - process.arrivalTime;
+      let waitTime = turnaroundTime - process.burstTime;
+      completionTimes[process.id] = currentTime;
+      turnaroundTimes[process.id] = turnaroundTime;
+      waitTimes[process.id] = waitTime;
+      totalWait += waitTime;
+      totalTurnaround += turnaroundTime;
+    }
+  }
+  return [completionTimes, waitTimes, turnaroundTimes, totalWait, totalTurnaround];
 };
-
 export default rr;

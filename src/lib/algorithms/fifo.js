@@ -1,3 +1,4 @@
+//super simple, run processes in order of arrival
 const fifo = (processes) => {
   
   let completionTimes = [];
