@@ -1,29 +1,39 @@
-//Super basic, processes get to go by order of arrival
 const fifo = (processes) => {
-    let time = 0;
+  
   let completionTimes = [];
   let waitTimes = [];
   let turnaroundTimes = [];
-
-  processes.sort((a, b) => a.arrival - b.arrival); //ensures processes are run by arrival time
-
+  let totalWait = 0;
+  let totalTurnaround = 0;
+  
+  let currentTime = 0;
+  
   processes.forEach((process) => {
-    time += process.burst;
-    completionTimes.push(time);
-    turnaroundTimes.push(time - process.arrival);
-    waitTimes.push(turnaroundTimes[turnaroundTimes.length - 1] - process.burst);
+    if (currentTime < process.arrivalTime) {
+      currentTime = process.arrivalTime;
+    }
+    
+    let completionTime = currentTime + process.burstTime;
+    let turnaroundTime = completionTime - process.arrivalTime;
+    let waitTime = turnaroundTime - process.burstTime;
+    
+    completionTimes.push(completionTime);
+    turnaroundTimes.push(turnaroundTime);
+    waitTimes.push(waitTime);
+    
+    totalWait += waitTime;
+    totalTurnaround += turnaroundTime;
+    
+    currentTime = completionTime;
   });
-
-  const totalWaitTime = waitTimes.reduce((acc, curr) => acc + curr, 0);
-  const totalTurnaroundTime = turnaroundTimes.reduce((acc, curr) => acc + curr, 0);
-
-  return {
-    completionTimes,
-    waitTimes,
-    turnaroundTimes,
-    totalWaitTime,
-    totalTurnaroundTime
-  };
-}
+  
+  return [
+    completionTimes, 
+    waitTimes, 
+    turnaroundTimes, 
+    totalWait, 
+    totalTurnaround
+  ];
+};
 
 export default fifo;
